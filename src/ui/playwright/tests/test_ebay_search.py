@@ -24,11 +24,11 @@ def test_ebay_search_click_second_result(page):
     # ✅ Wait until we're clearly on a results page
     # eBay usually loads results under #srp-river-results OR ul.srp-results
     results_container = page.locator("ul.srp-results")
-    expect(results_container).to_be_visible(timeout=5000)
+    expect(results_container).to_be_visible(timeout=30000)
 
     items = page.locator("li.s-card")
 
-    expect(items.first).to_be_visible(timeout=5000)
+    expect(items.first).to_be_visible(timeout=30000)
     second = items.nth(3).locator("a.s-card__link")
 
     # ---- capture the card title BEFORE clicking ----
