@@ -11,7 +11,10 @@ def _safe_name(name: str) -> str:
 def browser():
     # One Playwright instance per test session
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--disable-dev-shm-usage", "--no-sandbox"]
+        )
         yield browser
         browser.close()
 
@@ -41,10 +44,19 @@ def page(browser, request):
 
     # ✅ Screenshot on failure
     if failed:
-        page.screenshot(path=f"artifacts/{test_name}.png", full_page=True)
+        try:
+            page.screenshot(path=f"artifacts/{test_name}.png", full_page=True)
+        except Exception as e:
+            # Don't fail teardown if the page/browser crashed
+            with open(f"artifacts/{test_name}.screenshot_error.txt", "w") as f:
+                f.write(str(e))
 
     # ✅ Always save trace (so artifacts always has something)
-    context.tracing.stop(path=f"artifacts/{test_name}.trace.zip")
+        try:
+            context.tracing.stop(path=f"artifacts/{test_name}.trace.zip")
+        except Exception as e:
+            with open(f"artifacts/{test_name}.trace_error.txt", "w") as f:
+                f.write(str(e))
 
     context.close()
 

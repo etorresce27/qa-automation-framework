@@ -3,22 +3,38 @@ from playwright.sync_api import expect, TimeoutError as PlaywrightTimeoutError
 
 @pytest.mark.smoke
 def test_ebay_search_click_second_result(page):
+    # Give the site more time in CI
+    page.set_default_timeout(30000)
+
     page.goto("https://www.ebay.com", wait_until="domcontentloaded")
 
-    # Unique search input (strict-safe)
-    page.get_by_role("combobox", name="Search for anything").fill("iphone")
+    # (Optional) handle consent banner if it appears
+    # This is safe: try it, but don't fail if it's not there
+    try:
+        consent = page.get_by_role("button", name="Accept all")
+        if consent.is_visible():
+            consent.click()
+    except Exception:
+        pass
 
-    # ✅ Strict-safe search button
+    # Search
+    page.get_by_role("combobox", name="Search for anything").fill("iphone")
     page.locator("#gh-search-btn").click()
 
-    # Filter results to real items with links
-    results = page.locator("li.s-item").filter(has=page.locator("a.s-item__link"))
-    expect(results.first).to_be_visible()
+    # ✅ Wait until we're clearly on a results page
+    # eBay usually loads results under #srp-river-results OR ul.srp-results
+    results_container = page.locator("#srp-river-results, ul.srp-results")
+    expect(results_container).to_be_visible(timeout=30000)
 
-    second = results.nth(1)
-    expect(second).to_be_visible()
+    # ✅ Now locate items (more flexible selectors)
+    # Some layouts use .s-item; we also ensure the link exists.
+    items = page.locator("li.s-item").filter(has=page.locator("a[href]"))
+    expect(items.first).to_be_visible(timeout=30000)
 
-    link = second.locator("a.s-item__link").first
+    second = items.nth(1)
+    expect(second).to_be_visible(timeout=30000)
+
+    link = second.locator("a[href]").first
     start_url = page.url
 
     # Dual-path: new tab OR same tab
@@ -33,7 +49,7 @@ def test_ebay_search_click_second_result(page):
     target = new_page if new_page else page
     target.wait_for_load_state("domcontentloaded")
 
-    # Validate title is non-empty
+    # Validate: title non-empty
     expect(target).to_have_title(lambda t: len(t.strip()) > 0)
 
     # If same tab, confirm URL changed
