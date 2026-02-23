@@ -1,7 +1,6 @@
 import pytest
 from playwright.sync_api import expect, TimeoutError as PlaywrightTimeoutError
 
-@pytest.mark.smoke
 def test_ebay_search_click_second_result(page):
     # Give the site more time in CI
     page.set_default_timeout(5000)
