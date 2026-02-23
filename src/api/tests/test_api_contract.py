@@ -1,7 +1,6 @@
 import pytest
 import requests
 
-@pytest.mark.smoke
 def test_user_contract_basic():
     res = requests.get("https://jsonplaceholder.typicode.com/users/1", timeout=20)
     assert res.status_code == 200
