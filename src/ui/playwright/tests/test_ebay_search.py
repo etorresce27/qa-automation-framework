@@ -39,7 +39,7 @@ def test_ebay_search_click_second_result(page):
     # Dual-path: new tab OR same tab
     new_page = None
     try:
-        with page.context.expect_page(timeout=3000) as new_page_info:
+        with page.context.expect_page(timeout=30000) as new_page_info:
             second.first.click()
         new_page = new_page_info.value
     except PlaywrightTimeoutError:
